@@ -130,6 +130,8 @@ class Polyedr:
 
         # списки вершин, рёбер и граней полиэдра
         self.vertexes, self.edges, self.facets = [], [], []
+        self.stan_edges = []
+        self.stan_vertexes = []
         self.sum_edges = 0.0
 
         # список строк файла
@@ -148,6 +150,7 @@ class Polyedr:
                 elif i < nv + 2:
                     # задание всех вершин полиэдра
                     x, y, z = (float(x) for x in line.split())
+                    self.stan_vertexes.append(R3(x, y, z))
                     self.vertexes.append(R3(x, y, z).rz(
                         alpha).ry(beta).rz(gamma) * c)
                 else:
@@ -157,23 +160,32 @@ class Polyedr:
                     size = int(buf.pop(0))
                     # массив вершин этой грани
                     vertexes = list(self.vertexes[int(n) - 1] for n in buf)
+                    stan_vertexes = list(
+                        self.stan_vertexes[int(n) - 1] for n in buf)
                     # задание рёбер грани
                     for n in range(size):
+                        self.stan_edges.append(
+                            Edge(stan_vertexes[n - 1], stan_vertexes[n]))
                         self.edges.append(Edge(vertexes[n - 1], vertexes[n]))
-                        a = (vertexes[n - 1].x, vertexes[n].x,
-                             (vertexes[n - 1].x + vertexes[n].x) / 2)
-                        b = (vertexes[n - 1].y, vertexes[n].y,
-                             (vertexes[n - 1].y + vertexes[n].y) / 2)
-                        if all(Polyedr.circle_out(x, y) for x, y in zip(a, b)):
-                            self.sum_edges += sqrt(
-                                (vertexes[n].x - vertexes[n - 1].x) ** 2 +
-                                (vertexes[n].y - vertexes[n - 1].y) ** 2 +
-                                (vertexes[n].z - vertexes[n - 1].z) ** 2)
                     # задание самой грани
                     self.facets.append(Facet(vertexes))
+            stan_vertexes = Polyedr.edges_uniq(self.stan_edges)
+            for n in range(len(stan_vertexes)):
+                a = (stan_vertexes[n].beg.x, stan_vertexes[n].fin.x,
+                     (stan_vertexes[n].beg.x + stan_vertexes[n].fin.x) / 2)
+                b = (stan_vertexes[n].beg.y, stan_vertexes[n].fin.y,
+                     (stan_vertexes[n].beg.y + stan_vertexes[n].fin.y) / 2)
+                if all(Polyedr.circle_out(x, y) for x, y in zip(a, b)):
+                    self.sum_edges += sqrt(
+                        (stan_vertexes[n].beg.x - stan_vertexes[
+                            n].fin.x) ** 2 +
+                        (stan_vertexes[n].beg.y - stan_vertexes[
+                            n].fin.y) ** 2 +
+                        (stan_vertexes[n].beg.z - stan_vertexes[
+                            n].fin.z) ** 2)
 
     def sum_edgess(self):
-        return round(self.sum_edges, 5)
+        return round(self.sum_edges, 10)
 
     @staticmethod
     def circle_out(p, q):
@@ -187,3 +199,12 @@ class Polyedr:
                 e.shadow(f)
             for s in e.gaps:
                 tk.draw_line(e.r3(s.beg), e.r3(s.fin))
+
+    @staticmethod
+    # Удаление дубликатов рёбер
+    def edges_uniq(spisok):
+        edges = {}
+        for e in spisok:
+            if (e.beg, e.fin) not in edges and (e.fin, e.beg) not in edges:
+                edges[(e.beg, e.fin)] = e
+        return list(edges.values())
