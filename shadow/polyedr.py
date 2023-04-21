@@ -130,6 +130,8 @@ class Polyedr:
 
         # списки вершин, рёбер и граней полиэдра
         self.vertexes, self.edges, self.facets = [], [], []
+
+        # Необходимые данные
         self.stan_edges = []
         self.stan_vertexes = []
         self.sum_edges = 0.0
@@ -169,12 +171,16 @@ class Polyedr:
                         self.edges.append(Edge(vertexes[n - 1], vertexes[n]))
                     # задание самой грани
                     self.facets.append(Facet(vertexes))
+            # Списки рёбер в исходных координатах и измененных
+            vertexes = Polyedr.edges_uniq(self.edges)
             stan_vertexes = Polyedr.edges_uniq(self.stan_edges)
+
+            # Добавление в переменную, отвечающую за сумму длин, длин рёбер
             for n in range(len(stan_vertexes)):
-                a = (stan_vertexes[n].beg.x, stan_vertexes[n].fin.x,
-                     (stan_vertexes[n].beg.x + stan_vertexes[n].fin.x) / 2)
-                b = (stan_vertexes[n].beg.y, stan_vertexes[n].fin.y,
-                     (stan_vertexes[n].beg.y + stan_vertexes[n].fin.y) / 2)
+                a = (vertexes[n].beg.x, vertexes[n].fin.x,
+                     (vertexes[n].beg.x + vertexes[n].fin.x) / 2)
+                b = (vertexes[n].beg.y, vertexes[n].fin.y,
+                     (vertexes[n].beg.y + vertexes[n].fin.y) / 2)
                 if all(Polyedr.circle_out(x, y) for x, y in zip(a, b)):
                     self.sum_edges += sqrt(
                         (stan_vertexes[n].beg.x - stan_vertexes[
@@ -183,10 +189,11 @@ class Polyedr:
                             n].fin.y) ** 2 +
                         (stan_vertexes[n].beg.z - stan_vertexes[
                             n].fin.z) ** 2)
-
+    # Функция, возвращающая сумму длин
     def sum_edgess(self):
         return round(self.sum_edges, 10)
 
+    # Функция, для соответствия точки условию
     @staticmethod
     def circle_out(p, q):
         return p ** 2 + q ** 2 > 1
@@ -200,6 +207,7 @@ class Polyedr:
             for s in e.gaps:
                 tk.draw_line(e.r3(s.beg), e.r3(s.fin))
 
+    # Функция из 2-ой оптимизации
     @staticmethod
     # Удаление дубликатов рёбер
     def edges_uniq(spisok):
