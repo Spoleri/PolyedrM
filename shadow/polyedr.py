@@ -110,8 +110,7 @@ class Facet:
     # Вспомогательный метод
     def _vert(self, k):
         n = (self.vertexes[k] - self.vertexes[k - 1]).cross(Polyedr.V)
-        return n * \
-               (-1.0) if n.dot(
+        return n * (-1.0) if n.dot(
             self.vertexes[k - 1] - self.center()) < 0.0 else n
 
     # Центр грани
@@ -189,6 +188,7 @@ class Polyedr:
                             n].fin.y) ** 2 +
                         (stan_vertexes[n].beg.z - stan_vertexes[
                             n].fin.z) ** 2)
+
     # Функция, возвращающая сумму длин
     def sum_edgess(self):
         return round(self.sum_edges, 10)
